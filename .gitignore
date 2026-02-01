@@ -1,0 +1,36 @@
+# =====================
+# .NET build outputs
+# =====================
+bin/
+obj/
+
+# =====================
+# Rider / JetBrains
+# =====================
+.idea/
+*.sln.iml
+
+# =====================
+# macOS
+# =====================
+.DS_Store
+
+# =====================
+# Logs & temp files
+# =====================
+*.log
+*.tmp
+
+# =====================
+# Import files (external data)
+# =====================
+*.tab
+*.tsv
+
+# =====================
+# Database / local secrets
+# =====================
+appsettings.json
+appsettings.Development.json
+*.mdf
+*.ldf
