@@ -7,4 +7,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Folder Include="Database\" />
+      <Folder Include="Interfaces\" />
+      <Folder Include="Validation\" />
+    </ItemGroup>
+
 </Project>
