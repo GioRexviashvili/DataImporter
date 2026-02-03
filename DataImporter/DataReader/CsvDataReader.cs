@@ -6,6 +6,7 @@ namespace DataImporter.DataReader;
 public class CsvDataReader : IDataReader
 {
     private readonly string _filePath;
+    public List<RowError> Errors { get; }
 
     public CsvDataReader(string filePath)
     {
