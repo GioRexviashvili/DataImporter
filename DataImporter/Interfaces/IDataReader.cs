@@ -4,5 +4,5 @@ namespace DataImporter.Interfaces;
 
 public interface IDataReader
 {
-    IEnumerable<Category> GetData();
+    IEnumerable<IReadOnlyCollection<ImportRow>> GetData(Guid batchId, int batchSize);
 }

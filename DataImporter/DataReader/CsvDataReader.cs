@@ -18,7 +18,7 @@ public class CsvDataReader : IDataReader
         _filePath = filePath;
     }
 
-    public IEnumerable<Category> GetData()
+    public IEnumerable<IReadOnlyCollection<ImportRow>> GetData(Guid batchId, int batchSize)
     {
         throw new NotImplementedException();
     }
