@@ -9,6 +9,7 @@ obj/
 # =====================
 .idea/
 *.sln.iml
+*.DotSettings.user
 
 # =====================
 # macOS
