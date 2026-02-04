@@ -1,6 +1,6 @@
 namespace DataImporter.Models;
 
-public sealed record ImportRow
+public record ImportRow
 {
     public Guid BatchId { get; init; }
     public int LineNumber { get; init; }
