@@ -31,7 +31,6 @@ obj/
 # =====================
 # Database / local secrets
 # =====================
-appsettings.json
 appsettings.Development.json
 *.mdf
 *.ldf
