@@ -45,7 +45,7 @@ public class CsvDataReader : IDataReader
                 continue;
             }
 
-            string[] values = line.Split('\t');
+            string[] values = line.Split('\t', StringSplitOptions.TrimEntries);
 
             if (values.Length != 7)
             {
@@ -56,9 +56,6 @@ public class CsvDataReader : IDataReader
                 });
                 continue;
             }
-
-            for (int i = 0; i < values.Length; i++)
-                values[i] = values[i].Trim();
 
             batch.Add(new ImportRow
             {
