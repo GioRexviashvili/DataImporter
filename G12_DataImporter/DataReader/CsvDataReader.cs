@@ -46,15 +46,19 @@ public sealed class CsvDataReader : IDataReader, IDisposable
 
         Dictionary<string, Category> categories = new();
         HashSet<string> productCodes = new();
+        int lineCounter = 1;
 
         while (!reader.EndOfStream)
         {
             IReadOnlyList<string> tokens = GetTokens(reader);
+            if (tokens.Count != 7)
+                throw new InvalidDataException($"Line {lineCounter}, invalid data format. Expected 7 tokens but got {tokens.Count}.");
+
             Category category = GetCategoryFromTokens(tokens);
             Product product = GetProductFromTokens(tokens);
 
             if (!productCodes.Add(product.Code))
-                throw new InvalidDataException($"Product code wasn't unique : {product.Name} - {product.Code}");
+                throw new InvalidDataException($"Product code wasn't unique: {product.Name} - {product.Code}");
 
             if (!categories.TryGetValue(category.Name, out Category? existingCategory))
             {
@@ -65,6 +69,7 @@ public sealed class CsvDataReader : IDataReader, IDisposable
             {
                 existingCategory.Products.Add(product);
             }
+            lineCounter++;
         }
 
         return categories.Values;
@@ -80,7 +85,7 @@ public sealed class CsvDataReader : IDataReader, IDisposable
             int.Parse(tokens[5]),
             Convert.ToBoolean(int.Parse(tokens[6])));
 
-    private static string[] GetTokens(StreamReader reader)
+    private static string[] GetTokens(TextReader reader) 
         => reader.ReadLine()!.Split('\t');
 
     public void Dispose()

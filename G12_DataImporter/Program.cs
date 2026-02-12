@@ -8,24 +8,18 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        FileInfo fileInfo = new FileInfo("/Users/irakli/Downloads/Products.txt");
+        FileInfo fileInfo = new FileInfo(@"DataFile\Products.tsv");
 
         CsvDataReader csvDataReader = new CsvDataReader(fileInfo);
         IEnumerable<Category> categories = csvDataReader.GetData();
-            
-        foreach (var category in categories)
+
+        foreach (Category category in categories)
         {
-            foreach (var product in category.Products)         
+            Console.WriteLine(category);
+            foreach (Product product in category.Products)
             {
-                Console.WriteLine($"{category} {product}");
+                Console.WriteLine($"\t{product}");
             }
         }
-
-        int x = Convert.ToInt16(true);
-        Console.WriteLine(x);
-
-        const string connectionString= "Server=localhost;Database=G12_ProductsCatalogue;UID=sa;PWD=Limon4ik!;Integrated Security=False; TrustServerCertificate=True";
-        SqlWriter sqlWriter = new(categories, connectionString);
-        sqlWriter.WriteData();
     }
 }
