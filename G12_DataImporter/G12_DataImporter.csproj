@@ -11,4 +11,14 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DataFile\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="DataFile\Products.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
