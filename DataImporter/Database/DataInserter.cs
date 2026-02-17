@@ -17,19 +17,31 @@ public class DataInserter : IDataInserter
 
     public void InsertBatch(SqlConnection connection, IReadOnlyCollection<ImportRow> batch)
     {
+        if (connection is null)
+            throw new ArgumentNullException(nameof(connection));
+        if (batch is null)
+            throw new ArgumentNullException(nameof(batch));
+        if (batch.Count == 0)
+            return;
+        
         if (connection.State != ConnectionState.Open)
             throw new InvalidOperationException("SqlConnection must be open.");
 
         try
         {
+            DataTable.BeginLoadData();
             foreach (var importRow in batch)
-            {
                 AddImportRowToDataTable(importRow);
-            }
+            DataTable.EndLoadData();
 
-            using SqlBulkCopy bulkCopy = new(connection);
+            using SqlBulkCopy bulkCopy = new(connection, SqlBulkCopyOptions.TableLock, null)
+            {
+                DestinationTableName = "dbo.StagingTable",
+                BulkCopyTimeout = 60,
+                BatchSize = DataTable.Rows.Count,
+            };
+
             AddColumnMappings(bulkCopy);
-            bulkCopy.DestinationTableName = "dbo.StagingTable";
             bulkCopy.WriteToServer(DataTable);
         }
         finally
