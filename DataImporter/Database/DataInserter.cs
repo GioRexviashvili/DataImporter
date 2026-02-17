@@ -17,6 +17,9 @@ public class DataInserter : IDataInserter
 
     public void InsertBatch(SqlConnection connection, IReadOnlyCollection<ImportRow> batch)
     {
+        if (connection.State != ConnectionState.Open)
+            throw new InvalidOperationException("SqlConnection must be open.");
+
         try
         {
             foreach (var importRow in batch)
@@ -24,7 +27,8 @@ public class DataInserter : IDataInserter
                 AddImportRowToDataTable(importRow);
             }
 
-            using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
+            using SqlBulkCopy bulkCopy = new(connection);
+            AddColumnMappings(bulkCopy);
             bulkCopy.DestinationTableName = "dbo.StagingTable";
             bulkCopy.WriteToServer(DataTable);
         }
@@ -32,6 +36,19 @@ public class DataInserter : IDataInserter
         {
             DataTable.Clear();
         }
+    }
+
+    private static void AddColumnMappings(SqlBulkCopy bulkCopy)
+    {
+        bulkCopy.ColumnMappings.Add("BatchId", "BatchId");
+        bulkCopy.ColumnMappings.Add("LineNumber", "LineNumber");
+        bulkCopy.ColumnMappings.Add("CategoryName", "CategoryName");
+        bulkCopy.ColumnMappings.Add("CategoryIsActiveRaw", "CategoryIsActiveRaw");
+        bulkCopy.ColumnMappings.Add("ProductCode", "ProductCode");
+        bulkCopy.ColumnMappings.Add("ProductName", "ProductName");
+        bulkCopy.ColumnMappings.Add("PriceRaw", "PriceRaw");
+        bulkCopy.ColumnMappings.Add("QuantityRaw", "QuantityRaw");
+        bulkCopy.ColumnMappings.Add("ProductIsActiveRaw", "ProductIsActiveRaw");
     }
 
     private void AddImportRowToDataTable(ImportRow importRow)
