@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using DataImporter.DataReader;
 using DataImporter.Database;
@@ -34,6 +35,8 @@ internal static class Program
             using SqlConnection connection = new(connectionString);
             connection.Open();
             Console.WriteLine("Connection opened.\n");
+            
+            var sw = Stopwatch.StartNew();
 
             foreach (var batch in reader.GetData(batchId, batchSize))
             {
@@ -42,10 +45,15 @@ internal static class Program
                 totalInserted += batch.Count;
 
                 if (batchNumber % 10 == 0)
-                    Console.WriteLine($"Inserted {totalInserted} rows...\n");
+                {
+                    Console.WriteLine($"Inserted {totalInserted:n0} rows...\n");
+                }
             }
 
-            Console.WriteLine($"Done. Inserted total: {totalInserted}\n");
+            sw.Stop();
+            
+            Console.WriteLine($"Done. Inserted total: {totalInserted:n0}\n");
+            Console.WriteLine($"Elapsed: {sw.Elapsed}");
 
             if (reader.Errors.Count > 0)
             {
