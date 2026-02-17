@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Folder Include="DataFile\" />
       <Folder Include="Validation\" />
     </ItemGroup>
 
