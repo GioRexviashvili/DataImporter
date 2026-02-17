@@ -12,15 +12,7 @@ public class DataInserter : IDataInserter
     public DataInserter()
     {
         DataTable = new DataTable();
-        DataTable.Columns.Add("BatchId", typeof(Guid));
-        DataTable.Columns.Add("LineNumber", typeof(int));
-        DataTable.Columns.Add("CategoryName", typeof(string));
-        DataTable.Columns.Add("CategoryIsActiveRaw", typeof(string));
-        DataTable.Columns.Add("ProductCode", typeof(string));
-        DataTable.Columns.Add("ProductName", typeof(string));
-        DataTable.Columns.Add("PriceRaw", typeof(string));
-        DataTable.Columns.Add("QuantityRaw", typeof(string));
-        DataTable.Columns.Add("ProductIsActiveRaw", typeof(string));
+        InitializeDataTable();
     }
 
     public void InsertBatch(SqlConnection connection, IReadOnlyCollection<ImportRow> batch)
@@ -29,17 +21,7 @@ public class DataInserter : IDataInserter
         {
             foreach (var importRow in batch)
             {
-                DataTable.Rows.Add(
-                    importRow.BatchId,
-                    importRow.LineNumber,
-                    importRow.CategoryName,
-                    importRow.CategoryIsActiveRaw,
-                    importRow.ProductCode,
-                    importRow.ProductName,
-                    importRow.PriceRaw,
-                    importRow.QuantityRaw,
-                    importRow.ProductIsActiveRaw
-                );
+                AddImportRowToDataTable(importRow);
             }
 
             using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
@@ -50,5 +32,33 @@ public class DataInserter : IDataInserter
         {
             DataTable.Clear();
         }
+    }
+
+    private void AddImportRowToDataTable(ImportRow importRow)
+    {
+        DataTable.Rows.Add(
+            importRow.BatchId,
+            importRow.LineNumber,
+            importRow.CategoryName,
+            importRow.CategoryIsActiveRaw,
+            importRow.ProductCode,
+            importRow.ProductName,
+            importRow.PriceRaw,
+            importRow.QuantityRaw,
+            importRow.ProductIsActiveRaw
+        );
+    }
+
+    private void InitializeDataTable()
+    {
+        DataTable.Columns.Add("BatchId", typeof(Guid));
+        DataTable.Columns.Add("LineNumber", typeof(int));
+        DataTable.Columns.Add("CategoryName", typeof(string));
+        DataTable.Columns.Add("CategoryIsActiveRaw", typeof(string));
+        DataTable.Columns.Add("ProductCode", typeof(string));
+        DataTable.Columns.Add("ProductName", typeof(string));
+        DataTable.Columns.Add("PriceRaw", typeof(string));
+        DataTable.Columns.Add("QuantityRaw", typeof(string));
+        DataTable.Columns.Add("ProductIsActiveRaw", typeof(string));
     }
 }
