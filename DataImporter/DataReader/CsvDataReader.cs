@@ -13,25 +13,16 @@ public sealed class CsvDataReader : IDataReader, IDisposable
     
     public CsvDataReader(FileInfo fileInfo)
     {
-        ArgumentNullException.ThrowIfNull(fileInfo, nameof(fileInfo));
-        if (!fileInfo.Exists)
-            throw new FileNotFoundException("The specified file was not found.", fileInfo.FullName);
-        if ((fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
-            throw new ArgumentException("The provided path is a directory, not a file.", nameof(fileInfo));
-        
+        ValidateFileInfo(fileInfo);
+
         _stream = fileInfo.OpenRead();
         _ownsStream = true;
     }
 
     public CsvDataReader(Stream stream)
     {
-        ArgumentNullException.ThrowIfNull(stream, nameof(stream));
-        if (!stream.CanRead)
-            throw new ArgumentException("The provided stream cannot be read.", nameof(stream));
-        if (!stream.CanSeek)
-            throw new ArgumentException("The provided stream must support seeking.", nameof(stream));
-        if (stream.Position != 0)
-            stream.Seek(0, SeekOrigin.Begin);
+        ValidateStream(stream);
+        
         _stream = stream;
         _ownsStream = false;
     }
@@ -93,6 +84,26 @@ public sealed class CsvDataReader : IDataReader, IDisposable
             yield return batch;
     }
 
+    private static void ValidateFileInfo(FileInfo fileInfo)
+    {
+        ArgumentNullException.ThrowIfNull(fileInfo, nameof(fileInfo));
+        if (!fileInfo.Exists)
+            throw new FileNotFoundException("The specified file was not found.", fileInfo.FullName);
+        if ((fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+            throw new ArgumentException("The provided path is a directory, not a file.", nameof(fileInfo));
+    }
+    
+    private static void ValidateStream(Stream stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream, nameof(stream));
+        if (!stream.CanRead)
+            throw new ArgumentException("The provided stream cannot be read.", nameof(stream));
+        if (!stream.CanSeek)
+            throw new ArgumentException("The provided stream must support seeking.", nameof(stream));
+        if (stream.Position != 0)
+            stream.Seek(0, SeekOrigin.Begin);
+    }
+    
     private static void CreateImportRow(Guid batchId, List<ImportRow> batch, int lineNumber, string[] values)
     {
         batch.Add(new ImportRow
