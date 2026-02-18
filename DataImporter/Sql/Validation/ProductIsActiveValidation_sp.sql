@@ -3,11 +3,6 @@ as
 begin 
     set nocount on;
 
-    delete
-    from ImportErrors
-    where BatchId = @BatchId
-      and FieldName = N'ProductIsActiveRaw';
-
     insert into ImportErrors
     (BatchId, StageRowId, LineNumber, FieldName, RawValue, Reason)
     select s.BatchId,
