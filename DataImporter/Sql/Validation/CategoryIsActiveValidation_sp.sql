@@ -1,4 +1,4 @@
-create procedure CategoryIsActiveCheck_sp @BatchId uniqueidentifier
+create procedure CategoryIsActiveValidation_sp @BatchId uniqueidentifier
 as
 begin
     set nocount on;

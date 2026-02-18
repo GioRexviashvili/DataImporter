@@ -1,4 +1,4 @@
-create procedure ProductIsActiveRaw_sp @BatchId uniqueidentifier
+create procedure ProductIsActiveValidation_sp @BatchId uniqueidentifier
 as
 begin 
     set nocount on;
