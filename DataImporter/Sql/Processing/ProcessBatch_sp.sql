@@ -6,25 +6,38 @@ begin
     begin try
         begin transaction;
 
-        -- clean previous errors
         exec CleanUpImportErrors_sp @BatchId;
 
-        -- run all validations
         exec CategoryIsActiveValidation_sp @BatchId;
         exec ProductIsActiveValidation_sp @BatchId;
-
         exec ProductCodeValidation_sp @BatchId;
-
         exec CategoryNameValidation_sp @BatchId;
         exec ProductNameValidation_sp @BatchId;
-
         exec PriceValidation_sp @BatchId;
         exec QuantityValidation_sp @BatchId;
 
-        -- 3) build temp valid rows table
-        exec CreateTempValidTable_sp @BatchId;
+        if object_id('tempdb..#Valid') is not null
+            drop table #Valid;
 
-        -- 4) process valid data into final tables
+        select
+            s.Id as StageRowId,
+            ltrim(rtrim(s.CategoryName)) as CategoryName,
+            iif(try_convert(bit, ltrim(rtrim(s.CategoryIsActiveRaw))) = 1, 0, 1) as CategoryIsDeleted,
+            ltrim(rtrim(s.ProductCode)) as ProductCode,
+            ltrim(rtrim(s.ProductName)) as ProductName,
+            try_convert(money, ltrim(rtrim(s.PriceRaw))) as Price,
+            try_convert(int, ltrim(rtrim(s.QuantityRaw))) as Quantity,
+            iif(try_convert(bit, ltrim(rtrim(s.ProductIsActiveRaw))) = 1, 0, 1) as ProductIsDeleted
+        into #Valid
+        from StagingTable s
+        where s.BatchId = @BatchId
+          and not exists (
+            select 1
+            from ImportErrors e
+            where e.BatchId = @BatchId
+              and e.StageRowId = s.Id
+        );
+
         exec ProcessCategories_sp;
         exec ProcessProducts_sp;
 
@@ -33,11 +46,9 @@ begin
     begin catch
         if @@trancount > 0
             rollback transaction;
-
         throw;
     end catch;
 
-    -- 5) return summary for the app
     declare @stagingRows int;
     declare @invalidRows int;
     declare @errorsCount int;
@@ -54,9 +65,9 @@ begin
     from ImportErrors
     where BatchId = @BatchId;
 
-    select @BatchId                      as BatchId,
-           @stagingRows                  as StagingRows,
+    select @BatchId as BatchId,
+           @stagingRows as StagingRows,
            (@stagingRows - @invalidRows) as ValidRows,
-           @invalidRows                  as InvalidRows,
-           @errorsCount                  as ErrorsCount;
+           @invalidRows as InvalidRows,
+           @errorsCount as ErrorsCount;
 end
