@@ -26,4 +26,3 @@ begin
                    group by v.CategoryName) x on x.CategoryName = c.Name
     where c.IsDeleted != x.CategoryIsDeleted;
 end
-go
