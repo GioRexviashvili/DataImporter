@@ -11,6 +11,7 @@ internal static class Program
 {
     private const string ConnectionStringName = "DefaultConnection";
     private static Guid _batchId = Guid.Empty;
+    private static SqlConnection _connection;
 
     static int Main(string[] args)
     {
@@ -23,22 +24,31 @@ internal static class Program
 
             _batchId = Guid.NewGuid();
 
+            Console.WriteLine("\n----------------------------------------------");
+            Thread.Sleep(500);
             Console.WriteLine($"BatchId: {_batchId}");
+            Thread.Sleep(500);
             Console.WriteLine($"File: {filePath}");
-            Console.WriteLine($"Batch size: {batchSize}");
-            Console.WriteLine();
-
+            Thread.Sleep(500);
+            Console.WriteLine($"Batch size: {batchSize:n0}");
+            Thread.Sleep(500);
+            Console.WriteLine("----------------------------------------------\n");
+            
             using CsvDataReader reader = new CsvDataReader(new FileInfo(filePath));
             DataInserter inserter = new();
 
             int totalInserted = 0;
             int batchNumber = 0;
 
-            using SqlConnection connection = new(connectionString);
+            SqlConnection connection = new(connectionString);
+            _connection = connection;
             connection.Open();
-            Console.WriteLine("Connection opened.\n");
+            Thread.Sleep(500);
+            Console.WriteLine("[ Connection opened successfully! ]\n");
+            Thread.Sleep(500);
 
             var sw = Stopwatch.StartNew();
+            Console.WriteLine("[ Start reading and inserting batches into staging table! ]\n");
 
             foreach (var batch in reader.GetData(_batchId, batchSize))
             {
@@ -48,16 +58,31 @@ internal static class Program
 
                 if (batchNumber % 10 == 0)
                 {
-                    Console.WriteLine($"Inserted {totalInserted:n0} rows...\n");
+                    Console.Write($"{totalInserted:n0}k rows --> ");
                 }
             }
+            Console.Write("Done\n");
 
             sw.Stop();
+            
+            Thread.Sleep(1000);
 
-            Console.WriteLine($"Done. Inserted total: {totalInserted:n0}\n");
-            Console.WriteLine($"Elapsed: {sw.Elapsed}");
+            Console.WriteLine($"\nInserted total: {totalInserted:n0}\n");
+            Thread.Sleep(1000);
+            Console.WriteLine($"Time needed: {sw.Elapsed.Seconds} seconds.\n");
+            Thread.Sleep(1000);
 
-            Console.WriteLine("\nProcessing batch in database...\n");
+            if (reader.Errors.Count > 0)
+            {
+                Console.WriteLine($"Total Errors during reading from the file: {reader.Errors.Count}\n");
+                Thread.Sleep(1000);
+                Console.WriteLine("Errors:");
+                PrintErrors(reader);
+                Console.WriteLine("\n----------------------------------------------");
+                Thread.Sleep(1000);
+            }
+
+            Console.WriteLine("\nValidation & Inserting & Updating...\n");
 
             using (SqlCommand cmd = new SqlCommand("ProcessBatch_sp", connection))
             {
@@ -74,12 +99,16 @@ internal static class Program
                     int invalidRows = r.GetInt32(r.GetOrdinal("InvalidRows"));
                     int errorsCount = r.GetInt32(r.GetOrdinal("ErrorsCount"));
 
-                    Console.WriteLine($"db summary:");
-                    Console.WriteLine($"batchId: {dbBatchId}");
+                    Console.WriteLine($"Database Summary:");
+                    Thread.Sleep(500);
                     Console.WriteLine($"staging rows: {stagingRows:n0}");
+                    Thread.Sleep(500);
                     Console.WriteLine($"valid rows:   {validRows:n0}");
+                    Thread.Sleep(500);
                     Console.WriteLine($"invalid rows: {invalidRows:n0}");
+                    Thread.Sleep(500);
                     Console.WriteLine($"errors count: {errorsCount:n0}\n");
+                    Thread.Sleep(500);
                 }
             }
 
@@ -102,19 +131,15 @@ internal static class Program
                     string reason = r.GetString(r.GetOrdinal("Reason"));
 
                     Console.WriteLine($"line {lineNumber}: {fieldName}='{rawValue}' -> {reason}");
+                    Thread.Sleep(500);
                     printed++;
                 }
 
                 if (printed == 0)
                     Console.WriteLine("no database errors \n");
             }
-
-            if (reader.Errors.Count > 0)
-            {
-                Console.WriteLine($"Total Errors: {reader.Errors.Count}\n");
-                PrintErrors(reader);
-                return 2;
-            }
+            Console.WriteLine("----------------------------------------------\n");
+            Thread.Sleep(1000);
         }
         catch (Exception e)
         {
@@ -124,26 +149,23 @@ internal static class Program
         }
         finally
         {
-            if (_batchId != Guid.Empty)
+            try
             {
-                try
-                {
-                    IConfiguration config = BuildConfiguration();
-                    string cs = GetConnectionString(config);
+                Console.WriteLine("Cleaning up database...\n");
 
-                    using SqlConnection cleanupConn = new(cs);
-                    cleanupConn.Open();
+                using SqlCommand cmd = new("CleanUpStaging_sp", _connection);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add(new SqlParameter("@BatchId", SqlDbType.UniqueIdentifier) { Value = _batchId });
+                cmd.ExecuteNonQuery();
+                Console.WriteLine("Cleaning up Done.\n");
 
-                    using SqlCommand cmd = new("CleanUpStaging_sp", cleanupConn);
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.Add(new SqlParameter("@BatchId", SqlDbType.UniqueIdentifier) { Value = _batchId });
-                    cmd.ExecuteNonQuery();
-                }
-                catch (Exception cleanupEx)
-                {
-                    Console.WriteLine("Cleanup staging failed:");
-                    Console.WriteLine(cleanupEx);
-                }
+                _connection.Close();
+                _connection.Dispose();
+            }
+            catch (Exception cleanupEx)
+            {
+                Console.WriteLine("Cleanup staging failed:");
+                Console.WriteLine(cleanupEx);
             }
         }
 
@@ -185,6 +207,7 @@ internal static class Program
         foreach (var error in reader.Errors)
         {
             Console.WriteLine($"Line {error.LineNumber}: {error.Reason}\n");
+            Thread.Sleep(500);
         }
     }
 }
